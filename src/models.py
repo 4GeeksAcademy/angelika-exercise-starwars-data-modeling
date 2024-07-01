@@ -1,83 +1,38 @@
-import datetime
 import os
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Date
+import sys
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Enum
 from sqlalchemy.orm import relationship
-from flask_sqlalchemy import SQLAlchemy
-from eralchemy import render_er
+from sqlalchemy.ext.declarative import declarative_base
+from eralchemy2 import render_er
+import datetime
 
-from flask_sqlalchemy import SQLAlchemy
+Base = declarative_base()
 
-db = SQLAlchemy()
+class Person(Base):
+    __tablename__ = 'person'
 
-class PeopleFilms(db.Model):
-    __tablename__ = 'people_films'
-    people_id = db.Column(db.String, db.ForeignKey('people.url'), primary_key=True)
-    film_id = db.Column(db.String, db.ForeignKey('films.url'), primary_key=True)
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    birth_year = Column(String(50))
+    eye_color = Column(String(50))
+    gender = Column(String(50))
+    hair_color = Column(String(50))
+    height = Column(String(50))
+    mass = Column(String(50))
+    skin_color = Column(String(50))
+    homeworld = Column(String(250))
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+    edited = Column(DateTime, default=datetime.datetime.utcnow)
 
-class StarshipsFilms(db.Model):
-    __tablename__ = 'starships_films'
-    starship_id = db.Column(db.String, db.ForeignKey('starships.url'), primary_key=True)
-    film_id = db.Column(db.String, db.ForeignKey('films.url'), primary_key=True)
-
-class PeopleStarships(db.Model):
-    __tablename__ = 'people_starships'
-    people_id = db.Column(db.String, db.ForeignKey('people.url'), primary_key=True)
-    starship_id = db.Column(db.String, db.ForeignKey('starships.url'), primary_key=True)
-
-class VehiclesFilms(db.Model):
-    __tablename__ = 'vehicles_films'
-    vehicle_id = db.Column(db.String, db.ForeignKey('vehicles.url'), primary_key=True)
-    film_id = db.Column(db.String, db.ForeignKey('films.url'), primary_key=True)
-
-class PeopleVehicles(db.Model):
-    __tablename__ = 'people_vehicles'
-    people_id = db.Column(db.String, db.ForeignKey('people.url'), primary_key=True)
-    vehicle_id = db.Column(db.String, db.ForeignKey('vehicles.url'), primary_key=True)
-
-class SpeciesFilms(db.Model):
-    __tablename__ = 'species_films'
-    species_id = db.Column(db.String, db.ForeignKey('species.url'), primary_key=True)
-    film_id = db.Column(db.String, db.ForeignKey('films.url'), primary_key=True)
-
-class SpeciesPeople(db.Model):
-    __tablename__ = 'species_people'
-    species_id = db.Column(db.String, db.ForeignKey('species.url'), primary_key=True)
-    people_id = db.Column(db.String, db.ForeignKey('people.url'), primary_key=True)
-
-class PlanetsFilms(db.Model):
-    __tablename__ = 'planets_films'
-    planet_id = db.Column(db.String, db.ForeignKey('planets.url'), primary_key=True)
-    film_id = db.Column(db.String, db.ForeignKey('films.url'), primary_key=True)
-
-class PlanetsPeople(db.Model):
-    __tablename__ = 'planets_people'
-    planet_id = db.Column(db.String, db.ForeignKey('planets.url'), primary_key=True)
-    people_id = db.Column(db.String, db.ForeignKey('people.url'), primary_key=True)
-
-class People(db.Model):
-    __tablename__ = 'people'
-    url = db.Column(db.String, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    birth_year = db.Column(db.String)
-    eye_color = db.Column(db.String)
-    gender = db.Column(db.String)
-    hair_color = db.Column(db.String)
-    height = db.Column(db.String)
-    mass = db.Column(db.String)
-    skin_color = db.Column(db.String)
-    homeworld = db.Column(db.String)
-    created = db.Column(DateTime, default=datetime.datetime.utcnow)
-    edited = db.Column(DateTime, default=datetime.datetime.utcnow)
-
-    films = db.relationship('Film', secondary='people_films', backref=db.backref('characters', lazy='dynamic'))
-    starships = db.relationship('Starship', secondary='starships_films', backref=db.backref('pilots', lazy='dynamic'))
-    vehicles = db.relationship('Vehicle', secondary='vehicles_films', backref=db.backref('pilots', lazy='dynamic'))
-    species = db.relationship('Species', secondary='species_people', backref=db.backref('people', lazy='dynamic'))
-    planets = db.relationship('Planet', secondary='planets_people', backref=db.backref('residents', lazy='dynamic'))
+    films = relationship('Film', secondary='people_films', backref='characters')
+    starships = relationship('Starship', secondary='people_starships', backref='pilots')
+    vehicles = relationship('Vehicle', secondary='people_vehicles', backref='pilots')
+    species = relationship('Species', secondary='species_people', backref='people')
+    planets = relationship('Planet', secondary='planets_people', backref='residents')
 
     def to_dict(self):
         return {
-            'url': self.url,
+            'id': self.id,
             'name': self.name,
             'birth_year': self.birth_year,
             'eye_color': self.eye_color,
@@ -91,26 +46,27 @@ class People(db.Model):
             'edited': self.edited,
         }
 
-class Film(db.Model):
-    __tablename__ = 'films'
-    url = db.Column(db.String, primary_key=True)
-    title = db.Column(db.String, nullable=False)
-    episode_id = db.Column(db.Integer, nullable=False)
-    opening_crawl = db.Column(db.String)
-    director = db.Column(db.String)
-    producer = db.Column(db.String)
-    release_date = db.Column(Date)
-    created = db.Column(DateTime, default=datetime.datetime.utcnow)
-    edited = db.Column(DateTime, default=datetime.datetime.utcnow)
+class Film(Base):
+    __tablename__ = 'film'
 
-    species = db.relationship('Species', secondary='species_films', backref=db.backref('films', lazy='dynamic'))
-    starships = db.relationship('Starship', secondary='starships_films', backref=db.backref('films', lazy='dynamic'))
-    vehicles = db.relationship('Vehicle', secondary='vehicles_films', backref=db.backref('films', lazy='dynamic'))
-    planets = db.relationship('Planet', secondary='planets_films', backref=db.backref('films', lazy='dynamic'))
+    id = Column(Integer, primary_key=True)
+    title = Column(String(250), nullable=False)
+    episode_id = Column(Integer, nullable=False)
+    opening_crawl = Column(String)
+    director = Column(String(250))
+    producer = Column(String(250))
+    release_date = Column(DateTime)
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+    edited = Column(DateTime, default=datetime.datetime.utcnow)
+
+    species = relationship('Species', secondary='species_films', backref='films')
+    starships = relationship('Starship', secondary='starships_films', backref='films')
+    vehicles = relationship('Vehicle', secondary='vehicles_films', backref='films')
+    planets = relationship('Planet', secondary='planets_films', backref='films')
 
     def to_dict(self):
         return {
-            'url': self.url,
+            'id': self.id,
             'title': self.title,
             'episode_id': self.episode_id,
             'opening_crawl': self.opening_crawl,
@@ -121,31 +77,32 @@ class Film(db.Model):
             'edited': self.edited,
         }
 
-class Starship(db.Model):
-    __tablename__ = 'starships'
-    url = db.Column(db.String, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    model = db.Column(db.String)
-    starship_class = db.Column(db.String)
-    manufacturer = db.Column(db.String)
-    cost_in_credits = db.Column(db.String)
-    length = db.Column(db.String)
-    crew = db.Column(db.String)
-    passengers = db.Column(db.String)
-    max_atmosphering_speed = db.Column(db.String)
-    hyperdrive_rating = db.Column(db.String)
-    MGLT = db.Column(db.String)
-    cargo_capacity = db.Column(db.String)
-    consumables = db.Column(db.String)
-    created = db.Column(DateTime, default=datetime.datetime.utcnow)
-    edited = db.Column(DateTime, default=datetime.datetime.utcnow)
+class Starship(Base):
+    __tablename__ = 'starship'
 
-    films = db.relationship('Film', secondary='starships_films', backref=db.backref('starships', lazy='dynamic'))
-    pilots = db.relationship('People', secondary='people_starships', backref=db.backref('starships', lazy='dynamic'))
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    model = Column(String(250))
+    starship_class = Column(String(250))
+    manufacturer = Column(String(250))
+    cost_in_credits = Column(String(50))
+    length = Column(String(50))
+    crew = Column(String(50))
+    passengers = Column(String(50))
+    max_atmosphering_speed = Column(String(50))
+    hyperdrive_rating = Column(String(50))
+    MGLT = Column(String(50))
+    cargo_capacity = Column(String(50))
+    consumables = Column(String(50))
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+    edited = Column(DateTime, default=datetime.datetime.utcnow)
+
+    films = relationship('Film', secondary='starships_films', backref='starships')
+    pilots = relationship('Person', secondary='people_starships', backref='starships')
 
     def to_dict(self):
         return {
-            'url': self.url,
+            'id': self.id,
             'name': self.name,
             'model': self.model,
             'starship_class': self.starship_class,
@@ -163,29 +120,115 @@ class Starship(db.Model):
             'edited': self.edited,
         }
 
-class Vehicle(db.Model):
-    __tablename__ = 'vehicles'
-    url = db.Column(db.String, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    model = db.Column(db.String)
-    vehicle_class = db.Column(db.String)
-    manufacturer = db.Column(db.String)
-    length = db.Column(db.String)
-    cost_in_credits = db.Column(db.String)
-    crew = db.Column(db.String)
-    passengers = db.Column(db.String)
-    max_atmosphering_speed = db.Column(db.String)
-    cargo_capacity = db.Column(db.String)
-    consumables = db.Column(db.String)
-    created = db.Column(DateTime, default=datetime.datetime.utcnow)
-    edited = db.Column(DateTime, default=datetime.datetime.utcnow)
+class Vehicle(Base):
+    __tablename__ = 'vehicle'
 
-    films = db.relationship('Film', secondary='vehicles_films', backref=db.backref('vehicles', lazy='dynamic'))
-    pilots = db.relationship('People', secondary='people_vehicles', backref=db.backref('vehicles', lazy='dynamic'))
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    model = Column(String(250))
+    vehicle_class = Column(String(250))
+    manufacturer = Column(String(250))
+    length = Column(String(50))
+    cost_in_credits = Column(String(50))
+    crew = Column(String(50))
+    passengers = Column(String(50))
+    max_atmosphering_speed = Column(String(50))
+    cargo_capacity = Column(String(50))
+    consumables = Column(String(50))
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+    edited = Column(DateTime, default=datetime.datetime.utcnow)
 
+    films = relationship('Film', secondary='vehicles_films', backref='vehicles')
+    pilots = relationship('Person', secondary='people_vehicles', backref='vehicles')
 
     def to_dict(self):
-        return {}
+        return {
+            'id': self.id,
+            'name': self.name,
+            'model': self.model,
+            'vehicle_class': self.vehicle_class,
+            'manufacturer': self.manufacturer,
+            'length': self.length,
+            'cost_in_credits': self.cost_in_credits,
+            'crew': self.crew,
+            'passengers': self.passengers,
+            'max_atmosphering_speed': self.max_atmosphering_speed,
+            'cargo_capacity': self.cargo_capacity,
+            'consumables': self.consumables,
+            'created': self.created,
+            'edited': self.edited,
+        }
 
+class Species(Base):
+    __tablename__ = 'species'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    classification = Column(String(250))
+    designation = Column(String(250))
+    average_height = Column(String(50))
+    average_lifespan = Column(String(50))
+    eye_colors = Column(String(250))
+    hair_colors = Column(String(250))
+    skin_colors = Column(String(250))
+    language = Column(String(250))
+    homeworld = Column(String(250))
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+    edited = Column(DateTime, default=datetime.datetime.utcnow)
+
+    people = relationship('Person', secondary='species_people', backref='species')
+    films = relationship('Film', secondary='species_films', backref='species')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'classification': self.classification,
+            'designation': self.designation,
+            'average_height': self.average_height,
+            'average_lifespan': self.average_lifespan,
+            'eye_colors': self.eye_colors,
+            'hair_colors': self.hair_colors,
+            'skin_colors': self.skin_colors,
+            'language': self.language,
+            'homeworld': self.homeworld,
+            'created': self.created,
+            'edited': self.edited,
+        }
+
+class Planet(Base):
+    __tablename__ = 'planet'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    diameter = Column(String(50))
+    rotation_period = Column(String(50))
+    orbital_period = Column(String(50))
+    gravity = Column(String(50))
+    population = Column(String(50))
+    climate = Column(String(250))
+    terrain = Column(String(250))
+    surface_water = Column(String(50))
+    created = Column(DateTime, default=datetime.datetime.utcnow)
+    edited = Column(DateTime, default=datetime.datetime.utcnow)
+
+    residents = relationship('Person', secondary='planets_people', backref='planets')
+    films = relationship('Film', secondary='planets_films', backref='planets')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'diameter': self.diameter,
+            'rotation_period': self.rotation_period,
+            'orbital_period': self.orbital_period,
+            'gravity': self.gravity,
+            'population': self.population,
+            'climate': self.climate,
+            'terrain': self.terrain,
+            'surface_water': self.surface_water,
+            'created': self.created,
+            'edited': self.edited,
+        }
 ## Draw from SQLAlchemy base
 render_er(Base, 'diagram.png')
