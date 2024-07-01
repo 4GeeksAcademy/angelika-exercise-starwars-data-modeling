@@ -8,12 +8,6 @@ from eralchemy2 import render_er
 
 Base = declarative_base()
 
-from sqlalchemy import create_engine, Column, String, Integer, Date, ForeignKey, Table, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-
-Base = declarative_base()
-
 people_films = Table('people_films', Base.metadata,
     Column('people_id', String, ForeignKey('people.url'), primary_key=True),
     Column('film_id', String, ForeignKey('films.url'), primary_key=True)
