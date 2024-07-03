@@ -1,6 +1,6 @@
 import os
 import sys
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Enum
+from sqlalchemy import Table, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from eralchemy2 import render_er
@@ -8,8 +8,8 @@ import datetime
 
 Base = declarative_base()
 
-class Person(Base):
-    __tablename__ = 'person'
+class People(Base):
+    __tablename__ = 'people'
 
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
@@ -21,8 +21,8 @@ class Person(Base):
     mass = Column(String(50))
     skin_color = Column(String(50))
     homeworld = Column(String(250))
-    created = Column(DateTime, default=datetime.datetime.utcnow)
-    edited = Column(DateTime, default=datetime.datetime.utcnow)
+    created = Column(DateTime)
+    edited = Column(DateTime)
 
     films = relationship('Film', secondary='people_films', backref='characters')
     starships = relationship('Starship', secondary='people_starships', backref='pilots')
@@ -44,7 +44,7 @@ class Person(Base):
             'homeworld': self.homeworld,
             'created': self.created,
             'edited': self.edited,
-        }
+        }    
 
 class Film(Base):
     __tablename__ = 'film'
@@ -56,8 +56,8 @@ class Film(Base):
     director = Column(String(250))
     producer = Column(String(250))
     release_date = Column(DateTime)
-    created = Column(DateTime, default=datetime.datetime.utcnow)
-    edited = Column(DateTime, default=datetime.datetime.utcnow)
+    created = Column(DateTime)
+    edited = Column(DateTime)
 
     species = relationship('Species', secondary='species_films', backref='films')
     starships = relationship('Starship', secondary='starships_films', backref='films')
@@ -76,7 +76,7 @@ class Film(Base):
             'created': self.created,
             'edited': self.edited,
         }
-
+    
 class Starship(Base):
     __tablename__ = 'starship'
 
@@ -94,8 +94,8 @@ class Starship(Base):
     MGLT = Column(String(50))
     cargo_capacity = Column(String(50))
     consumables = Column(String(50))
-    created = Column(DateTime, default=datetime.datetime.utcnow)
-    edited = Column(DateTime, default=datetime.datetime.utcnow)
+    created = Column(DateTime)
+    edited = Column(DateTime)
 
     films = relationship('Film', secondary='starships_films', backref='starships')
     pilots = relationship('Person', secondary='people_starships', backref='starships')
@@ -135,8 +135,8 @@ class Vehicle(Base):
     max_atmosphering_speed = Column(String(50))
     cargo_capacity = Column(String(50))
     consumables = Column(String(50))
-    created = Column(DateTime, default=datetime.datetime.utcnow)
-    edited = Column(DateTime, default=datetime.datetime.utcnow)
+    created = Column(DateTime)
+    edited = Column(DateTime)
 
     films = relationship('Film', secondary='vehicles_films', backref='vehicles')
     pilots = relationship('Person', secondary='people_vehicles', backref='vehicles')
@@ -173,8 +173,8 @@ class Species(Base):
     skin_colors = Column(String(250))
     language = Column(String(250))
     homeworld = Column(String(250))
-    created = Column(DateTime, default=datetime.datetime.utcnow)
-    edited = Column(DateTime, default=datetime.datetime.utcnow)
+    created = Column(DateTime)
+    edited = Column(DateTime)
 
     people = relationship('Person', secondary='species_people', backref='species')
     films = relationship('Film', secondary='species_films', backref='species')
@@ -209,8 +209,8 @@ class Planet(Base):
     climate = Column(String(250))
     terrain = Column(String(250))
     surface_water = Column(String(50))
-    created = Column(DateTime, default=datetime.datetime.utcnow)
-    edited = Column(DateTime, default=datetime.datetime.utcnow)
+    created = Column(DateTime)
+    edited = Column(DateTime)
 
     residents = relationship('Person', secondary='planets_people', backref='planets')
     films = relationship('Film', secondary='planets_films', backref='planets')
@@ -230,5 +230,51 @@ class Planet(Base):
             'created': self.created,
             'edited': self.edited,
         }
-## Draw from SQLAlchemy base
+    
+people_films = Table('people_films', Base.metadata,
+                     Column('people_id', Integer, ForeignKey('people.id'), primary_key=True),
+                     Column('film_id', Integer, ForeignKey('film.id'), primary_key=True)
+                     )
+
+people_starships = Table('people_starships', Base.metadata,
+                         Column('people_id', Integer, ForeignKey('people.id'), primary_key=True),
+                         Column('starship_id', Integer, ForeignKey('starship.id'), primary_key=True)
+                         )
+
+people_vehicles = Table('people_vehicles', Base.metadata,
+                        Column('people_id', Integer, ForeignKey('people.id'), primary_key=True),
+                        Column('vehicle_id', Integer, ForeignKey('vehicle.id'), primary_key=True)
+                        )
+
+species_people = Table('species_people', Base.metadata,
+                       Column('people_id', Integer, ForeignKey('people.id'), primary_key=True),
+                       Column('species_id', Integer, ForeignKey('species.id'), primary_key=True)
+                       )
+
+planets_people = Table('planets_people', Base.metadata,
+                       Column('people_id', Integer, ForeignKey('people.id'), primary_key=True),
+                       Column('planet_id', Integer, ForeignKey('planet.id'), primary_key=True)
+                       )
+
+species_films = Table('species_films', Base.metadata,
+                      Column('species_id', Integer, ForeignKey('species.id'), primary_key=True),
+                      Column('film_id', Integer, ForeignKey('film.id'), primary_key=True)
+                      )
+
+starships_films = Table('starships_films', Base.metadata,
+                        Column('starship_id', Integer, ForeignKey('starship.id'), primary_key=True),
+                        Column('film_id', Integer, ForeignKey('film.id'), primary_key=True)
+                        )
+
+vehicles_films = Table('vehicles_films', Base.metadata,
+                       Column('vehicle_id', Integer, ForeignKey('vehicle.id'), primary_key=True),
+                       Column('film_id', Integer, ForeignKey('film.id'), primary_key=True)
+                       )
+
+planets_films = Table('planets_films', Base.metadata,
+                      Column('planet_id', Integer, ForeignKey('planet.id'), primary_key=True),
+                      Column('film_id', Integer, ForeignKey('film.id'), primary_key=True)
+                      )
+
+# Render ER diagram
 render_er(Base, 'diagram.png')
